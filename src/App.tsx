@@ -1,35 +1,56 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route, Link } from "react-router-dom";
+import Login from "./pages/Login";
+import Home from "./pages/Home";
+import Playlists from "./pages/Playlists";
+import Musicas from "./pages/Musicas";
+import PrivateRoute from "./components/PrivateRoute";
+import PlaylistManage from "./pages/PlaylistManage";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+      <nav className="navbar">
+        <Link to="/home">Home</Link>
+        <Link to="/playlists">Playlists</Link>
+        <Link to="/musicas">Músicas</Link>
+      </nav>
 
-export default App
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/home"
+          element={
+            <PrivateRoute>
+              <Home />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/playlists/:id"
+          element={
+            <PrivateRoute>
+              <PlaylistManage />
+          </PrivateRoute>
+         }
+        />
+        <Route
+          path="/playlists"
+          element={
+            <PrivateRoute>
+              <Playlists />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/musicas"
+          element={
+            <PrivateRoute>
+              <Musicas />
+            </PrivateRoute>
+          }
+        />
+        <Route path="*" element={<Login />} />
+      </Routes>
+    </>
+  );
+}

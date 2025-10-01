@@ -1,0 +1,117 @@
+/* Reposiciona o container da página */
+.playlists-wrap {
+  position: absolute;  /* tira do fluxo normal */
+  top: 40px;          /* distância do topo da tela */
+  left: 40px;         /* distância da esquerda */
+  margin: 0;           /* remove centralização */
+  max-width: 400px;    /* limita largura */
+}
+
+.muted { color: #cfcfcf; opacity: .9; }
+
+/* ===== FORM DE CRIAÇÃO ===== */
+/* limite do conjunto input+botão */
+.playlist-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* opcional: limite o bloco todo */
+  max-width: 460px;
+  margin: 12px 0 16px;
+}
+
+/* controla o tamanho do INPUT especificamente */
+.playlist-form input {
+  width: 300px !important;   /* força o tamanho do campo */
+  max-width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: rgba(20,20,20,.8);
+  color: #fff;
+  outline: none;
+}
+.playlist-form input:focus { border-color: #6a9cff; }
+
+/* ===== LISTA ===== */
+.playlist-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  max-width: 720px;         /* limite da lista */
+}
+
+.playlist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(22,22,22,.72);
+  border: 1px solid #2a2a2a;
+  backdrop-filter: blur(6px);
+}
+
+.playlist-info { display: flex; align-items: center; }
+
+/* ===== AÇÕES ===== */
+.playlist-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn {
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border: 1px solid #3a3a3a;
+  background: #222;
+  color: #fff;
+}
+.btn:hover { border-color: #6a9cff; }
+
+.btn.primary {
+  background: #2a2a2a;
+}
+.btn.ghost {
+  background: transparent;
+  color: #9fb8ff;
+}
+.btn.danger {
+  background: #3a1e1e;
+  border-color: #5a2a2a;
+}
+.btn.danger:hover { border-color: #ff7d7d; }
+
+/* ===== EDIÇÃO INLINE ===== */
+.edit-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+}
+
+.edit-row input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: rgba(20,20,20,.86);
+  color: #fff;
+  outline: none;
+}
+.edit-row input:focus { border-color: #6a9cff; }
+
+/* responsivo */
+@media (max-width: 640px) {
+  .playlist-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .playlist-actions { justify-content: flex-end; }
+}

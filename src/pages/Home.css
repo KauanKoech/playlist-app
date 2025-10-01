@@ -1,0 +1,111 @@
+.home-wrap {
+  padding: clamp(16px, 3vw, 28px);
+  max-width: 1000px;
+  margin: 0 auto;
+  color: #fff;
+}
+
+/* HERO */
+.home-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.home-hero h1 {
+  margin: 0 0 6px;
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  letter-spacing: .4px;
+}
+.muted { color: #cfcfcf; opacity: .9; }
+
+/* botões */
+button.ghost {
+  background: transparent;
+  color: #9fb8ff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+button.ghost:hover { border-color: #6a9cff; }
+button.ghost.small { padding: 6px 10px; }
+
+/* AÇÕES RÁPIDAS */
+.quick-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 12px 0 16px;
+}
+@media (min-width: 700px) {
+  .quick-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.quick-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  width: 100%;
+  background: rgba(22,22,22,.7);
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  padding: 14px 16px;
+  backdrop-filter: blur(6px);
+  color: #fff;
+  cursor: pointer;
+}
+.quick-card:hover { border-color: #6a9cff; }
+.quick-card .emoji { font-size: 1.6rem; }
+
+/* STATS */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.stat {
+  background: rgba(22,22,22,.7);
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  padding: 14px 16px;
+  backdrop-filter: blur(6px);
+}
+.stat .label { display: block; color: #aaa; margin-bottom: 4px; }
+.stat .value { font-size: 1.4rem; font-weight: 700; }
+
+/* LISTA */
+.list-block {
+  background: rgba(22,22,22,.7);
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  padding: 14px 16px;
+  backdrop-filter: blur(6px);
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.small-link {
+  color: #9fb8ff;
+  text-decoration: none;
+}
+.small-link:hover { text-decoration: underline; }
+
+.plist { list-style: none; padding: 0; margin: 0; }
+.plist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px solid #2a2a2a;
+}
+.plist-item:first-child { border-top: none; }
