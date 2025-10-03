@@ -1,33 +1,49 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
-  mostLovedTracks,
   searchTrackByArtistAndTitle,
   searchTracksByTitleOnly,
+  mostLovedTracks,
+  popularSample, // << ADICIONE ESTE IMPORT
 } from "../api/theAudioDB";
 import type { Music } from "../types";
 
 export const searchTracks = createAsyncThunk<
   Music[],
-  { title?: string; artist?: string; genre?: string; year?: string; popular?: boolean }
+  {
+    title?: string;
+    artist?: string;
+    genre?: string;
+    year?: string;
+    popular?: boolean; // populares (tenta oficial e cai no simulado)
+    popularSimArgs?: { size?: number; perArtist?: number; genreBias?: string }; // args opcionais
+  }
 >("music/searchTracks", async (query) => {
+  // POPULARES
   if (query.popular) {
-    return await mostLovedTracks();
+    try {
+      const loved = await mostLovedTracks();
+      if (loved.length) return loved;
+    } catch {
+      // ignora e cai no simulado
+    }
+    const sim = await popularSample(query.popularSimArgs ?? { size: 6, perArtist: 2 });
+    return sim;
   }
 
+  // BUSCA NORMAL
   const artist = (query.artist || "").trim();
   const title  = (query.title  || "").trim();
-
   let tracks: Music[] = [];
+
   if (artist && title) {
     tracks = await searchTrackByArtistAndTitle(artist, title);
-  } else if (title) {
-    tracks = await searchTracksByTitleOnly(title);
   } else if (artist) {
-    // quando só artista: reutiliza a heurística do título (que cai no top10 do artista)
-    tracks = await searchTracksByTitleOnly(artist);
+    tracks = await searchTracksByTitleOnly(artist); // cai no top10 do artista
+  } else if (title) {
+    tracks = await searchTracksByTitleOnly(title);  // heurística título puro
   }
 
-  // filtros client-side (tolerantes)
+  // FILTROS client-side
   if (query.genre?.trim()) {
     const g = query.genre.toLowerCase();
     tracks = tracks.filter(t => (t.genero || "").toLowerCase().includes(g));

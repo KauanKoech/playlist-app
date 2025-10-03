@@ -108,7 +108,7 @@ export default function Musicas() {
           placeholder="Artista (ex.: Coldplay) — obrigatório para buscar por título"
           aria-label="Artista"
         />
-        <button onClick={doPopular}>Populares</button>
+        <button onClick={() => dispatch(searchTracks({popular: true}))}>Populares</button>
       </div>
 
       {/* aviso quando digitou título sem artista */}
