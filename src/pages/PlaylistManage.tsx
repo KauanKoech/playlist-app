@@ -8,7 +8,6 @@ import { searchTracks } from "../redux/musicSlice";
 import { selectMusic, selectMusicLoading } from "../redux/musicSlice";
 import type { Music } from "../types";
 
-// Tela para gerenciar músicas dentro de uma playlist específica
 export default function PlaylistManage() {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
@@ -18,15 +17,12 @@ export default function PlaylistManage() {
   const loading = useSelector(selectMusicLoading);
   const results = useSelector(selectMusic);
 
-  // Campo de busca da API
   const [q, setQ] = useState("");
 
-  // Garante que playlists do usuário estejam carregadas
   useEffect(() => {
     dispatch(loadForUser({ usuarioId: user.id }));
   }, [dispatch, user.id]);
 
-  // Caso o ID não pertença ao usuário logado
   if (!playlist) {
     return <div style={{ padding: 24 }}>Playlist não encontrada ou sem permissão.</div>;
   }
@@ -35,7 +31,6 @@ export default function PlaylistManage() {
     <div style={{ padding: 24 }}>
       <h1>Gerenciar: {playlist.nome}</h1>
 
-      {/* Lista de músicas já adicionadas */}
       <h3>Músicas da playlist</h3>
       {playlist.musicas.length === 0 ? <p>Nenhuma música.</p> : (
         <ul>
@@ -52,7 +47,6 @@ export default function PlaylistManage() {
 
       <hr />
 
-      {/* Seção de busca na API */}
       <h3>Adicionar da API</h3>
       <input
         value={q}
@@ -62,7 +56,6 @@ export default function PlaylistManage() {
       />
       <button onClick={() => dispatch(searchTracks({ title: q }))}>Buscar</button>
 
-      {/* Resultados da busca */}
       {loading && <p>Carregando...</p>}
       <ul>
         {results.map((m: Music) => (

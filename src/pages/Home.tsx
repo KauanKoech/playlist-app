@@ -1,117 +1,100 @@
-import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { login, selectIsAuthenticated } from "../redux/userSlice";
+import { useNavigate, Link } from "react-router-dom";
+import { logout, selectUser } from "../redux/userSlice";
+import { selectPlaylists } from "../redux/playlistSlice";
 import type { AppDispatch } from "../redux/store";
+import "./Home.css";
 
-// Credenciais de demonstração (mock)
-const CREDENTIALS = { email: "kauan.k@aluno.ifsc.edu.br", senha: "kaka22" };
-
-// Tela de Login com validação simples e persistência em sessionStorage
-export default function Login() {
+export default function Home() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const authed = useSelector(selectIsAuthenticated);
+  const user = useSelector(selectUser);
+  const playlists = useSelector(selectPlaylists).filter(p => p.usuarioId === user?.id);
 
-  // Estados do formulário
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [showPwd, setShowPwd] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; senha?: string; cred?: string }>({});
-  const disabled = useMemo(() => !email || !senha, [email, senha]);
-
-  // Redireciona se já estiver autenticado
-  useEffect(() => {
-    if (authed) navigate("/home", { replace: true });
-  }, [authed, navigate]);
-
-  // Validação básica de e-mail e senha
-  function validar(): boolean {
-    const next: typeof errors = {};
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = "E-mail inválido";
-    if (senha.length < 6) next.senha = "A senha deve ter 6+ caracteres";
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  }
-
-  // Submit: valida, confere mock e despacha login
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setErrors({});
-    if (!validar()) return;
-    if (email === CREDENTIALS.email && senha === CREDENTIALS.senha) {
-      dispatch(login({ id: "u1", email }));
-      navigate("/home");
-    } else {
-      setErrors({ cred: "Credenciais inválidas." });
-    }
-  }
+  const stats = useMemo(() => {
+    const totalMusicas = playlists.reduce((acc, p) => acc + p.musicas.length, 0);
+    return {
+      totalPlaylists: playlists.length,
+      totalMusicas,
+      ultimas: playlists.slice(-3).reverse(),
+    };
+  }, [playlists]);
 
   return (
-    <div className="login-wrap hero-center">
-      <div className="login-card">
-        {/* Cabeçalho */}
-        <header className="login-header">
-          <h1>Logar</h1>
-          <p className="muted">Use as credenciais fornecidas.</p>
-        </header>
+    <div className="home-wrap">
+      {/* HERO */}
+      <header className="home-hero">
+        <div>
+          <h1>Schmidtunes</h1>
+          <p className="muted">
+            Olá {user?.email?.split("@")[0] || "usuário"}!
+            {user?.lastLogin && (
+              <> Último login: <strong>{new Date(user.lastLogin).toLocaleString()}</strong></>
+            )}
+          </p>
+        </div>
+        <button className="ghost" onClick={() => dispatch(logout())}>Sair</button>
+      </header>
 
-        {/* Formulário de login */}
-        <form className="login-form" onSubmit={onSubmit} noValidate>
-          <label>
-            E-mail
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="aluno@aluno.ifsc.edu.br"
-              autoComplete="email"
-              required
-            />
-            {errors.email && <span className="error">{errors.email}</span>}
-          </label>
+      {/* AÇÕES RÁPIDAS */}
+      <section className="quick-grid">
+        <button className="quick-card" onClick={() => navigate("/playlists")}>
+          <span className="emoji">💿</span>
+          <div>
+            <h3>Criar Playlist</h3>
+            <p className="muted">Organize suas faixas favoritas.</p>
+          </div>
+        </button>
 
-          <label>
-            Senha
-            <div className="pwd-row">
-              <input
-                type={showPwd ? "text" : "password"}
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                placeholder="senha"
-                autoComplete="current-password"
-                required
-                minLength={6}
-              />
-              {/* Mostrar/ocultar senha */}
-              <button
-                type="button"
-                className="ghost"
-                onClick={() => setShowPwd((v) => !v)}
-              >
-                {showPwd ? "Ocultar" : "Mostrar"}
-              </button>
-            </div>
-            {errors.senha && <span className="error">{errors.senha}</span>}
-          </label>
+        <button className="quick-card" onClick={() => navigate("/musicas")}>
+          <span className="emoji">🔎</span>
+          <div>
+            <h3>Buscar Músicas</h3>
+            <p className="muted">Encontre faixas pelo título ou artista.</p>
+          </div>
+        </button>
+      </section>
 
-          {/* Erro de credenciais */}
-          {errors.cred && <div className="error cred">{errors.cred}</div>}
+      {/* RESUMO / METRICAS */}
+      <section className="stats-grid">
+        <div className="stat">
+          <span className="label">Playlists</span>
+          <span className="value">{stats.totalPlaylists}</span>
+        </div>
+        <div className="stat">
+          <span className="label">Músicas</span>
+          <span className="value">{stats.totalMusicas}</span>
+        </div>
+        {/* espaço para futura métrica (ex.: última playlist acessada) */}
+        <div className="stat">
+          <span className="label">Sessão</span>
+          <span className="value">{user?.email ? "Ativa" : "—"}</span>
+        </div>
+      </section>
 
-          {/* Botão de envio (desabilita sem campos) */}
-          <button className="primary" type="submit" disabled={disabled}>
-            Entrar
-          </button>
-        </form>
-
-        {/* Rodapé informativo */}
-        <footer className="login-footer">
-          <small className="muted">
-            A sessão é salva em <code>sessionStorage</code> (<code>session:user</code>) com <em>lastLogin</em>.
-          </small>
-        </footer>
-      </div>
+      {/* LISTA RÁPIDA */}
+      <section className="list-block">
+        <div className="list-header">
+          <h3>Últimas playlists</h3>
+          <Link to="/playlists" className="small-link">ver todas →</Link>
+        </div>
+        {stats.ultimas.length === 0 ? (
+          <p className="muted">Você ainda não tem playlists. Comece criando uma!</p>
+        ) : (
+          <ul className="plist">
+            {stats.ultimas.map(p => (
+              <li key={p.id} className="plist-item">
+                <div>
+                  <strong>{p.nome}</strong>
+                  <span className="muted"> &nbsp;• {p.musicas.length} música(s)</span>
+                </div>
+                <button className="ghost small" onClick={() => navigate("/playlists")}>abrir</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

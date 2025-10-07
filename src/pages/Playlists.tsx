@@ -8,24 +8,20 @@ import {
 } from "../redux/playlistSlice";
 import "./Playlists.css";
 
-// Página de listagem/CRUD de playlists do usuário logado
 export default function Playlists() {
   const user = useSelector(selectUser)!;
   const playlists = useSelector(selectPlaylists).filter(p => p.usuarioId === user.id);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  // Estado local para criar/renomear
   const [nome, setNome] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
   const [novoNome, setNovoNome] = useState("");
 
-  // Carrega playlists do usuário ao montar
   useEffect(() => {
     dispatch(loadForUser({ usuarioId: user.id }));
   }, [dispatch, user.id]);
 
-  // Handler de criação de playlist
   function onCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!nome.trim()) return;
@@ -37,7 +33,6 @@ export default function Playlists() {
     <div className="playlists-wrap">
       <h1>Minhas Playlists</h1>
 
-      {/* Form de criação */}
       <form className="playlist-form" onSubmit={onCreate}>
         <input
           value={nome}
@@ -48,12 +43,10 @@ export default function Playlists() {
         <button type="submit" className="btn primary">Criar</button>
       </form>
 
-      {/* Lista de playlists com ações */}
       <ul className="playlist-list">
         {playlists.map((p) => (
           <li key={p.id} className="playlist-item">
             {editId === p.id ? (
-              // Modo edição de nome
               <div className="edit-row">
                 <input
                   value={novoNome}
