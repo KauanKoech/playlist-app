@@ -1,3 +1,4 @@
+// Tipo que representa uma música
 export type Music = {
   id: string;
   nome: string;
@@ -6,6 +7,7 @@ export type Music = {
   ano?: string;
 };
 
+// Tipo que representa uma playlist de um usuário
 export type Playlist = {
   id: string;
   nome: string;
@@ -13,6 +15,7 @@ export type Playlist = {
   musicas: Music[];
 };
 
+// Tipo básico de usuário do sistema
 export type User = {
   id: string;
   email: string;

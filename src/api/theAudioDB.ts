@@ -4,6 +4,7 @@ import type { Music } from "../types";
 /* =========================================
  * Config
  * =======================================*/
+// URL base da TheAudioDB (usa env ou padrão público)
 const BASE_URL =
   import.meta.env.VITE_AUDIO_DB_BASE_URL ||
   "https://www.theaudiodb.com/api/v1/json/2";
@@ -12,26 +13,25 @@ const BASE_URL =
  * Helpers (map, dedupe, sample, enrich)
  * =======================================*/
 
-/** Converte payloads diversos da API para nosso tipo Music (limita a 10 por chamada) */
+/** Mapeia payload da API para o tipo Music (máx. 10 itens) */
 function mapTracks(raw: any[]): Music[] {
   return (raw ?? []).slice(0, 10).map((t: any) => ({
     id: String(t.idTrack ?? t.idAlbum ?? t.idArtist ?? Math.random()),
     nome: t.strTrack ?? t.strAlbum ?? t.strTrackAlternate ?? "Desconhecida",
     artista: t.strArtist ?? "—",
     genero: t.strGenre ?? t.strStyle ?? undefined,
-    // preferimos ano de lançamento; alguns endpoints usam intYear
     ano: t.intYearReleased ?? t.intYear ?? undefined,
   }));
 }
 
-/** Remove duplicados por id */
+/** Remove duplicatas pelo id */
 function dedupeById(list: Music[]): Music[] {
   const map = new Map<string, Music>();
   for (const m of list) map.set(m.id, m);
   return Array.from(map.values());
 }
 
-/** Sorteia k itens únicos de um array */
+/** Embaralha e retorna k itens únicos */
 function sampleUnique<T>(arr: T[], k: number): T[] {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -41,7 +41,7 @@ function sampleUnique<T>(arr: T[], k: number): T[] {
   return copy.slice(0, k);
 }
 
-/** Enriquece faixas sem ano consultando o álbum (album.php?m=...) */
+/** Completa ano consultando o álbum quando ausente */
 async function enrichYearFromAlbum(rawTracks: any[]): Promise<any[]> {
   const missing = rawTracks
     .filter((t) => !t?.intYearReleased && t?.idAlbum)
@@ -80,12 +80,14 @@ async function enrichYearFromAlbum(rawTracks: any[]): Promise<any[]> {
  * Endpoints principais
  * =======================================*/
 
+/** Busca artistas por nome */
 export async function searchArtists(q: string) {
   const url = `${BASE_URL}/search.php?s=${encodeURIComponent(q)}`;
   const { data } = await axios.get(url);
   return data?.artists ?? [];
 }
 
+/** Top 10 faixas de um artista */
 export async function topTracksByArtist(artist: string): Promise<Music[]> {
   const url = `${BASE_URL}/track-top10.php?s=${encodeURIComponent(artist)}`;
   const { data } = await axios.get(url);
@@ -93,6 +95,7 @@ export async function topTracksByArtist(artist: string): Promise<Music[]> {
   return mapTracks(raw);
 }
 
+/** Busca por artista + título */
 export async function searchTrackByArtistAndTitle(
   artist: string,
   title: string
@@ -105,7 +108,7 @@ export async function searchTrackByArtistAndTitle(
   return mapTracks(raw);
 }
 
-/** Tenta título puro; se falhar, trata como artista provável e cai em top10 */
+/** Tenta título puro; fallback: trata como artista e usa top10 */
 export async function searchTracksByTitleOnly(title: string): Promise<Music[]> {
   const tryTitleOnly = `${BASE_URL}/searchtrack.php?t=${encodeURIComponent(title)}`;
   const byTitle = await axios
@@ -118,11 +121,9 @@ export async function searchTracksByTitleOnly(title: string): Promise<Music[]> {
     return mapTracks(raw);
   }
 
-  // tenta como artista → top 10
   const asArtistTop = await topTracksByArtist(title);
   if (asArtistTop.length) return asArtistTop;
 
-  // resolve artista mais provável e tenta top10
   const artists = await searchArtists(title);
   const name = artists?.[0]?.strArtist;
   if (name) {
@@ -132,7 +133,7 @@ export async function searchTracksByTitleOnly(title: string): Promise<Music[]> {
   return [];
 }
 
-/** Populares oficiais; se 404/erro, usa fallback com artistas seed */
+/** Populares oficiais; fallback simulado se der erro */
 export async function mostLovedTracks(): Promise<Music[]> {
   try {
     const url = `${BASE_URL}/mostloved.php?format=track`;
@@ -140,7 +141,6 @@ export async function mostLovedTracks(): Promise<Music[]> {
     const raw = await enrichYearFromAlbum(data?.loved ?? data?.track ?? []);
     return mapTracks(raw);
   } catch {
-    // fallback: compõe com top10 de artistas populares (simulação básica)
     const seeds = ["Queen", "Adele", "Coldplay", "Michael Jackson", "Taylor Swift"];
     const all: Music[] = [];
     for (const a of seeds) {
@@ -148,7 +148,7 @@ export async function mostLovedTracks(): Promise<Music[]> {
         const tt = await topTracksByArtist(a);
         all.push(...tt);
       } catch {
-        // ignora falhas pontuais
+        // ignora falhas por artista
       }
     }
     return dedupeById(all).slice(0, 10);
@@ -159,7 +159,7 @@ export async function mostLovedTracks(): Promise<Music[]> {
  * Populares por amostragem (simulação robusta)
  * =======================================*/
 
-// Um pool maior de artistas pra dar variedade
+// Pool de artistas para variedade
 const SEED_ARTISTS = [
   "Queen","Adele","Coldplay","Michael Jackson","Taylor Swift",
   "The Beatles","Ed Sheeran","Rihanna","Bruno Mars","Madonna",
@@ -168,12 +168,7 @@ const SEED_ARTISTS = [
   "The Weeknd","Lady Gaga","Metallica","Pink Floyd","Nirvana",
 ];
 
-/**
- * Populares simulados:
- *  - size: quantos artistas sortear (ex.: 5)
- *  - perArtist: quantas faixas pegar de cada top 10 (ex.: 3)
- *  - genreBias: se vier, filtra por gênero depois de juntar
- */
+/** Composição de “populares” simulados com filtros opcionais */
 export async function popularSample(
   {
     size = 5,
@@ -186,17 +181,16 @@ export async function popularSample(
 
   for (const a of chosen) {
     try {
-      const top = await topTracksByArtist(a); // usa endpoint estável
+      const top = await topTracksByArtist(a);
       all.push(...top.slice(0, perArtist));
     } catch {
-      // ignora falhas pontuais por artista
+      // ignora falhas por artista
     }
   }
 
-  // deduplica
   let list = dedupeById(all);
 
-  // opcional: viés por gênero (só aplica se ainda mantiver >= 10)
+  // Viés por gênero (só aplica se ainda mantiver variedade)
   if (genreBias) {
     const g = genreBias.toLowerCase();
     const filtered = list.filter((t) =>

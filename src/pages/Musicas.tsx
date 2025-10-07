@@ -11,6 +11,7 @@ import { selectPlaylists, addMusic } from "../redux/playlistSlice";
 import { selectUser } from "../redux/userSlice";
 import type { Music, Playlist } from "../types";
 
+// Página de busca de músicas e adição em playlists
 export default function Musicas() {
   const dispatch = useDispatch<AppDispatch>();
   const music = useSelector<RootState, Music[]>(selectMusic);
@@ -19,28 +20,29 @@ export default function Musicas() {
   const playlists = useSelector<RootState, Playlist[]>(selectPlaylists);
   const user = useSelector(selectUser)!;
 
-  // campos de busca
+  // Campos de busca
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
 
-  // filtros (derivados do resultado)
+  // Filtros derivados do resultado
   const [genre, setGenre] = useState("");
   const [year, setYear] = useState("");
 
-  // valores disponíveis vindos do resultado
+  // Conjunto de gêneros disponíveis no resultado atual
   const availableGenres = useMemo(() => {
     const set = new Set<string>();
     music.forEach(m => m.genero && set.add(m.genero));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [music]);
 
+  // Conjunto de anos disponíveis no resultado atual
   const availableYears = useMemo(() => {
     const set = new Set<string>();
     music.forEach(m => m.ano && set.add(String(m.ano)));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [music]);
 
-  // aplica filtros client-side nos resultados atuais
+  // Aplica filtros client-side sobre o resultado
   const filtered = useMemo(() => {
     let list = music;
     if (genre) list = list.filter(m => (m.genero || "") === genre);
@@ -48,13 +50,12 @@ export default function Musicas() {
     return list;
   }, [music, genre, year]);
 
-  // debounce
+  // Debounce da busca
   const timer = useRef<number | null>(null);
 
+  // Dispara busca (regra: título só com artista)
   const doSearch = () => {
-    // regra: título sozinho é frágil; só busca título se tiver artista.
     if (title && !artist) return;
-    // dispara se artista existir, ou se (artista + título)
     if (artist || (artist && title)) {
       dispatch(
         searchTracks({
@@ -65,8 +66,9 @@ export default function Musicas() {
     }
   };
 
+  // Observa mudanças em artist/title com debounce
   useEffect(() => {
-    if (!(artist || title)) return; // não busca vazio
+    if (!(artist || title)) return;
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(doSearch, 400);
     return () => {
@@ -75,12 +77,14 @@ export default function Musicas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artist, title]);
 
+  // Busca pré-pronta de populares (limpa filtros)
   const doPopular = () => {
     setGenre("");
     setYear("");
     dispatch(searchTracks({ popular: true }));
   };
 
+  // Playlists do usuário logado
   const userPlaylists = playlists.filter(p => p.usuarioId === user.id);
 
   return (
@@ -108,17 +112,17 @@ export default function Musicas() {
           placeholder="Artista (ex.: Coldplay) — obrigatório para buscar por título"
           aria-label="Artista"
         />
-        <button onClick={() => dispatch(searchTracks({popular: true}))}>Populares</button>
+        <button onClick={doPopular}>Populares</button>
       </div>
 
-      {/* aviso quando digitou título sem artista */}
+      {/* Aviso de regra de busca */}
       {title && !artist && (
         <p className="muted" style={{ marginTop: 6 }}>
           Para buscar por <strong>título</strong>, informe também o <strong>artista</strong>.
         </p>
       )}
 
-      {/* filtros derivados */}
+      {/* Filtros derivados */}
       <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
         <select value={genre} onChange={(e) => setGenre(e.target.value)}>
           <option value="">Filtrar por gênero</option>
@@ -137,7 +141,7 @@ export default function Musicas() {
         )}
       </div>
 
-      {/* estados */}
+      {/* Estados de carregamento/erro/sem resultados */}
       {loading && <p>Carregando…</p>}
       {!loading && error && <p style={{ color: "#ff7d7d" }}>{error}</p>}
       {!loading && !error && (artist || title) && filtered.length === 0 && (
@@ -147,7 +151,7 @@ export default function Musicas() {
         <p className="muted">Dica: preencha <em>Artista</em> e opcionalmente o <em>Título</em>, ou clique “Populares”.</p>
       )}
 
-      {/* lista */}
+      {/* Lista de resultados + ação de adicionar a playlist */}
       <ul style={{ marginTop: 12 }}>
         {filtered.map((m) => {
           const selectId = `sel-${m.id}`;
